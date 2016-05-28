@@ -17,6 +17,7 @@ package ohi.andre.reflectionutils;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,7 +40,9 @@ public class ReflectionUtils {
     private static final String END_LABEL = "--- end";
     private static final String NULL_LABEL = "null";
     
-    public static void setAllFieldsTo(Object value, Object parentClass, PrintWriter writer) {
+    public static List<String> setAllFieldsTo(Object value, Object parentClass) {
+        List<String> settedFields = new ArrayList<>();
+        
         List<Field> fields = Arrays.asList(parentClass.getClass().getDeclaredFields());
         Class<?> toSetClass = value.getClass();
 
@@ -50,20 +53,34 @@ public class ReflectionUtils {
                 field.setAccessible(true);
                 try {
                     field.set(parentClass, value);
-                    writer.write(field.getName() + EQUALS + value.toString());
+                    settedFields.add(field.getName() + EQUALS + value.toString());
                 } catch (IllegalAccessException e) {}
             }
         }
+        
+        return settedFields;
+    }
+    
+    public static void setAllFieldsTo(Object value, Object parentClass, PrintWriter writer) {
+        if(writer == null) {
+            return;
+        }
+        
+        List<String> settedFields = setAllFieldsTo(value, parentClass);
+        
+        for(String s : settedFields) {
+            writer.write(s);
+        }
     }
 
-    public static void printStackTrace(StackTraceElement[] elements, PrintWriter writer) {
-        writer.write(START_LABEL);
+    public static List<String> printStackTrace(StackTraceElement[] elements) {
+        List<String> stackTrace = new ArrayList<>();
 
         String last = null;
         boolean lastWasTabbed = false;
         for (StackTraceElement element : elements) {
             if (last == null) {
-                writer.write(element.toString());
+                stackTrace.add(element.toString());
                 last = element.toString();
                 continue;
             }
@@ -84,98 +101,144 @@ public class ReflectionUtils {
 
             if (current.substring(0, currentSecondPoint).equals(last.substring(0, lastSecondPoint))) {
                 if (lastWasTabbed) {
-                    writer.write(TAB + current);
+                    stackTrace.add(TAB + current);
                 } else {
-                    writer.write(current);
+                    stackTrace.add(current);
                 }
             } else {
                 if (lastWasTabbed) {
-                    writer.write(current);
+                    stackTrace.add(current);
                     lastWasTabbed = false;
                 } else {
-                    writer.write(TAB + current);
+                    stackTrace.add(TAB + current);
                     lastWasTabbed = true;
                 }
             }
 
             last = current;
         }
-
+        
+        return stackTrace;
+    }
+    
+    public static void printStackTrace(StackTraceElement[] elements, PrintWriter writer) {
+        if(writer == null) {
+            return;
+        }
+        
+        List<String> stackTrace = printStackTrace(elements);
+        
+        writer.write(START_LABEL);
+        for(String s : stackTrace) {
+            writer.write(s);
+        }
         writer.write(END_LABEL);
         writer.write(NEWLINE);
     }
 
-    public static void printDeclaredMethods(Class<?> c, PrintWriter writer) {
-        printDeclaredMethods(c, null, writer);
+    public static List<String> printDeclaredMethods(Class<?> parentClass) {
+        return printDeclaredMethods(parentClass, (Class<?>) null);
     }
 
-    public static void printDeclaredMethods(Class<?> c, Class<?> returnType, PrintWriter writer) {
-        writer.write(START_LABEL);
+    public static List<String> printDeclaredMethods(Class<?> parentClass, Class<?> returnType) {
+        List<String> methods = new ArrayList<>();
 
-        for (Method method : c.getDeclaredMethods()) {
+        for (Method method : parentClass.getDeclaredMethods()) {
             if (returnType == null || returnType.equals(method.getReturnType())) {
-                writer.write(method.getReturnType() + SPACE + method.getName() + OPEN_LIST + Arrays.toString(method.getParameterTypes()) + CLOSE_LIST);
+                methods.add(method.getReturnType() + SPACE + method.getName() + OPEN_LIST + Arrays.toString(method.getParameterTypes()) + CLOSE_LIST);
             }
         }
+        
+        return methods;
+    }
+    
+    public static void printDeclaredMethods(Class<?> parentClass, PrintWriter writer) {
+        printDeclaredMethods(parentClass, null, writer);
+    }
 
+    public static void printDeclaredMethods(Class<?> parentClass, Class<?> returnType, PrintWriter writer) {
+        if(writer == null) {
+            return;
+        }
+        
+        List<String> methods = printDeclaredMethods(parentClass, returnType);
+        
+        writer.write(START_LABEL);
+        for(String s : methods) {
+            writer.write(s);
+        }
         writer.write(END_LABEL);
         writer.write(NEWLINE);
     }
 
-    public static void printDeclaredFields(Object o, PrintWriter writer) {
-        printDeclaredFields(o, null, writer);
+    public static List<String> printDeclaredFields(Object parentClass) {
+        return printDeclaredFields(parentClass, (Class<?>) null);
     }
 
-    public static void printDeclaredFields(Object o, Class<?> type, PrintWriter writer) {
-        Class<?> c = o.getClass();
-        writer.write(START_LABEL);
+    public static List<String> printDeclaredFields(Object parentClass, Class<?> type) {
+        List<String> fields = new ArrayList<>();
+        
+        Class<?> c = parentClass.getClass();
 
         for (Field field : c.getDeclaredFields()) {
             field.setAccessible(true);
 
             if (type == null || type.equals(field.getType())) {
                 try {
-                    writer.write(field.getType().getName() + SPACE + field.getName() + EQUALS + field.get(o).toString());
+                    fields.add(field.getType().getName() + SPACE + field.getName() + EQUALS + 
+                            field.get(parentClass).toString());
                 } 
                 catch (IllegalAccessException e) {} 
                 catch (NullPointerException e) {
-                    writer.write(field.getType().getName() + SPACE + field.getName() + EQUALS + NULL_LABEL);
+                    fields.add(field.getType().getName() + SPACE + field.getName() + EQUALS + NULL_LABEL);
                 }
             }
         }
-
+        
+        return fields;
+    }
+    
+    public static void printDeclaredFields(Object parentClass, PrintWriter writer) {
+        printDeclaredFields(parentClass, (Class<?>) null, writer);
+    }
+    
+    public static void printDeclaredFields(Object parentClass, Class<?> type, PrintWriter writer) {
+        if(writer == null) {
+            return;
+        }
+        
+        List<String> fields = printDeclaredFields(parentClass, type);
+        
+        writer.write(START_LABEL);
+        for(String s : fields) {
+            writer.write(s);
+        }
         writer.write(END_LABEL);
         writer.write(NEWLINE);
     }
     
-    public static boolean containsInt(int[] array, int i) {
-        if (array == null) {
-            return false;
-        }
-
-        for (int n : array) {
-            if (n == i) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static Field getFieldOfType(Field[] fields, String name, Class<?> type) {
+    public static Field getField(Class<?> parentClass, String name, Class<?> type) {
         Field r = null;
-        for (Field f : fields) {
-            if (f.getType().equals(type) && (name == null || f.getName().equals(name))) {
+        for (Field f : parentClass.getDeclaredFields()) {
+            if ((type == null || f.getType().equals(type)) && (name == null || f.getName().equals(name))) {
                 r = f;
+                break;
             }
         }
+        
         if (r != null) {
             r.setAccessible(true);
         }
+        
         return r;
     }
 
-    public static Field getFieldOfType(Field[] fields, Class<?> type) {
-        return getFieldOfType(fields, null, type);
+    public static Field getField(Class<?> parentClass, Class<?> type) {
+        return getField(parentClass, null, type);
+    }
+    
+    public static Field getField(Class<?> parentClass, String name) {
+        return getField(parentClass, name, null);
     }
 
     public static Method getMethod(Class<?> clazz, Class<?> returnType, Class<?>[] args) {
@@ -202,4 +265,23 @@ public class ReflectionUtils {
 
         return null;
     }
+    
+    public static <T> boolean arrayContains(final T[] array, final T v) {
+        if (v == null) {
+            for (final T e : array) {
+                if (e == null) {
+                    return true;
+                }
+            }
+        } else {
+            for (final T e : array) {
+                if (e == v || v.equals(e)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 }
