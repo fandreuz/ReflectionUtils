@@ -164,8 +164,9 @@ public class ReflectionUtils {
     public static Field getFieldOfType(Field[] fields, String name, Class<?> type) {
         Field r = null;
         for (Field f : fields) {
-            if (f.getType().equals(type) && (name == null || f.getName().equals(name)))
+            if (f.getType().equals(type) && (name == null || f.getName().equals(name))) {
                 r = f;
+            }
         }
         if (r != null) {
             r.setAccessible(true);
@@ -185,8 +186,9 @@ public class ReflectionUtils {
             if (method.getReturnType().equals(returnType)) {
 
                 Class<?>[] args2 = method.getParameterTypes();
-                if (args2.length != args.length)
+                if (args2.length != args.length) {
                     continue;
+                }
 
                 for (int count = 0; count < args.length; count++) {
                     if (!(args[count].equals(args2[count]))) {
