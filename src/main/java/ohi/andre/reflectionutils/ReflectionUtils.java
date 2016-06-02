@@ -241,29 +241,47 @@ public class ReflectionUtils {
         return getField(parentClass, name, null);
     }
 
-    public static Method getMethod(Class<?> clazz, Class<?> returnType, Class<?>[] args) {
+    public static Method getMethod(Class<?> clazz, String name, Class<?> returnType, Class<?>[] args) {
         Method[] methods = clazz.getDeclaredMethods();
 
         MainLoop:
         for (Method method : methods) {
-            if (method.getReturnType().equals(returnType)) {
-
-                Class<?>[] args2 = method.getParameterTypes();
-                if (args2.length != args.length) {
-                    continue;
-                }
-
-                for (int count = 0; count < args.length; count++) {
-                    if (!(args[count].equals(args2[count]))) {
-                        continue MainLoop;
-                    }
-                }
-
-                return method;
+               
+            if (name != null && !name.equals(method.getName())) {
+                continue;
             }
+            
+            if(returnType != null && !returnType.equals(method.getReturnType())) {
+                continue;
+            }
+
+            Class<?>[] args2 = method.getParameterTypes();
+            if (args2.length != args.length) {
+                continue;
+            }
+
+            for (int count = 0; count < args.length; count++) {
+                if (!(args[count].equals(args2[count]))) {
+                    continue MainLoop;
+                }
+            }
+
+            return method;
         }
 
         return null;
+    }
+    
+    public static Method getMethod(Class<?> clazz, String name) {
+        return getMethod(clazz, name, null, null);
+    }
+    
+    public static Method getMethod(Class<?> clazz, Class<?> returnType) {
+        return getMethod(clazz, null, returnType, null);
+    }
+    
+    public static Method getMethod(Class<?> clazz, Class<?>[] args) {
+        return getMethod(clazz, null, null, args);
     }
     
     public static <T> boolean arrayContains(final T[] array, final T v) {
