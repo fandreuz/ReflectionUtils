@@ -217,31 +217,30 @@ public class ReflectionUtils {
         writer.write(NEWLINE);
     }
     
-    public static Field getField(Class<?> parentClass, String name, Class<?> type) {
-        Field r = null;
+    public static Field getField(Class<?> parentClass, String name, String type) {
         for (Field f : parentClass.getDeclaredFields()) {
-            if ((type == null || f.getType().equals(type)) && (name == null || f.getName().equals(name))) {
-                r = f;
-                break;
+            if(name != null && !name.equals(f.getName())) {
+                continue;
+            }
+            
+            if (type != null && !f.getType().getName().equals(type)) {
+                f.setAccessible(true);
+                return f;
             }
         }
         
-        if (r != null) {
-            r.setAccessible(true);
-        }
-        
-        return r;
+        return null;
     }
 
     public static Field getField(Class<?> parentClass, Class<?> type) {
-        return getField(parentClass, null, type);
+        return getField(parentClass, null, type.getName());
     }
     
     public static Field getField(Class<?> parentClass, String name) {
         return getField(parentClass, name, null);
     }
 
-    public static Method getMethod(Class<?> clazz, String name, Class<?> returnType, Class<?>[] args) {
+    public static Method getMethod(Class<?> clazz, String name, String returnType, String[] args) {
         Method[] methods = clazz.getDeclaredMethods();
 
         MainLoop:
@@ -251,7 +250,7 @@ public class ReflectionUtils {
                 continue;
             }
             
-            if(returnType != null && !returnType.equals(method.getReturnType())) {
+            if(returnType != null && !returnType.equals(method.getReturnType().getName())) {
                 continue;
             }
 
@@ -261,7 +260,7 @@ public class ReflectionUtils {
             }
 
             for (int count = 0; count < args.length; count++) {
-                if (!(args[count].equals(args2[count]))) {
+                if (!(args[count].equals(args2[count].getName()))) {
                     continue MainLoop;
                 }
             }
@@ -277,11 +276,15 @@ public class ReflectionUtils {
     }
     
     public static Method getMethod(Class<?> clazz, Class<?> returnType) {
-        return getMethod(clazz, null, returnType, null);
+        return getMethod(clazz, null, returnType.getName(), null);
     }
     
     public static Method getMethod(Class<?> clazz, Class<?>[] args) {
-        return getMethod(clazz, null, null, args);
+        String[] params = new String[args.length];
+        for(int count = 0; count < params.length; count++) {
+            params[count] = args[count].getName();
+        }
+        return getMethod(clazz, null, null, params);
     }
     
     public static <T> boolean arrayContains(final T[] array, final T v) {
