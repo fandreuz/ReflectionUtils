@@ -254,14 +254,16 @@ public class ReflectionUtils {
                 continue;
             }
 
-            Class<?>[] args2 = method.getParameterTypes();
-            if (args2.length != args.length) {
-                continue;
-            }
+            if (args != null) {
+                Class<?>[] args2 = method.getParameterTypes();
+                if (args2.length != args.length) {
+                    continue;
+                }
 
-            for (int count = 0; count < args.length; count++) {
-                if (!(args[count].equals(args2[count].getName()))) {
-                    continue MainLoop;
+                for (int count = 0; count < args.length; count++) {
+                    if (!(args[count].equals(args2[count].getName()))) {
+                        continue MainLoop;
+                    }
                 }
             }
 
